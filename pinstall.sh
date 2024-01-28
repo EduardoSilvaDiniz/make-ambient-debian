@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-source installers.sh ## chamado script com todas as funções de instalação
+source Installers.sh ## chamado script com todas as funções de instalação
 source BuildSystem.sh ## chamando script com as funções que o menu chama
 
 (($UID==0)) && { echo 'não é permitido executar esse script como root. [ERROR]'; exit 1 ;}
@@ -49,19 +49,19 @@ wifiMenu="1. Wifi (Será usando keepassxc-cli para pegar a senha no diretorio wi
 Escolha uma opção: "
 
 
-readPkgs() {
+readPkgs(){
     pkgs_list=$(grep -vE "^\s*#" $1 | sed '/^\s*$/d')
     pkgs_apti=$(tr "\n" " " <<< $pkgs_list)
 }
 
-packageManager() {
+packageManager(){
     readPkgs "$pkgsPath/$1"
     clear
     echo "$mainTitle"
     echo -e "Os pacotes da lista '$1' serão $2:\n"
     echo -e "$pkgs_list\n"
-    read -p "Deseja continuar (S/n)? " wifiName
-    [[ ${wifiName,} = "n" ]] && return
+    read -p "Deseja continuar (S/n)? " op
+    [[ ${op,} = "n" ]] && return
     if (($?)); then
         echo "$instalando"
         sudo apt $2 -y $pkgs_apti
@@ -74,22 +74,22 @@ packageManager() {
     fi
 }
 
-menuNetwork()
-{
+menuNetwork(){
   while true; do
-    clear
-	  echo -e "$wifiMenu\c"
-	  read option
-    case $option in
-      1) connectWifi && break ;;
-      2) connectUSB && break ;;
-      *) echo "opção invalida [ERROR]" ;;
-    esac
+      clear
+      echo -e "$wifiMenu\c"
+      read option
+      case $option in
+	  1) connectWifi && break ;;
+	  2) connectUSB && break ;;
+	  *) echo "opção invalida [ERROR]" ;;
+      esac
   done
 }
 
-connectWifi()
-{
+connectWifi(){
+    sudo apt install keepassxc -y
+    clear
   while $status; do
     read -p "Digite o endereço do seu banco de senhas (Exemplo /home/user/db.kdbx): " database
     read -s -p "Digite a senha do seu banco de senhas: " passDatabase
@@ -117,11 +117,35 @@ connectWifi()
   done
 }
 
-connectUSB()
-{
+connectUSB(){
   ip a > ip-a && awk -F ': ' '{ print $2 }' ip-a > ip-a && network=$(awk '/enx/ { print }' a-mod) && \
   ip link set dev ${network} up && dhclient
 }
+
+AddUserSudo(){
+    USUARIO=$USER
+    echo "Digite a senha de ROOT"
+    su -c "apt install sudo; adduser $USUARIO sudo"
+}
+
+SoftwaresDaily(){
+    packageManager softwaresDaily install
+    installFlatpak
+    installAppFlatpak
+    installOhMyZsh
+    installChrome
+}
+SoftwaresDev(){
+    packageManager softwaresDev install
+    
+
+}
+SoftwaresEntertainment(){
+    packageManager softwaresEntertainment install
+    installSteam
+}
+
+#TODO Adiciona função para organizar meus arquivos do github DOTFILES EMACS-VANILLA DWM
 
 while true; do
     clear
@@ -131,14 +155,13 @@ while true; do
 	    0) menuNetwork ;;
 	    1) addUserSudo ;;
 	    2) packageManager driver-nvidia install ;;
-	    3) softwaresDaily ;;
-	    4) softwaresSync ;;
-	    5) softwareEntetrerimentERROR ;;
-	    6) softwareDev ;;
-	    7) browsers ;;
+	    3) packageManager softwaresDaily install ;;
+	    4) packageManager softwaresSync install ;;
+	    5) packageManager softwaresEntertainment install ;;
+	    6) packageManager softwaresDev install ;;
 	    8) packageManager fonts install ;;
 	    9) packageManager virtualization install ;;
-	   10) packageManager unistall remove ;;
+	   10) packageManager uninstall remove ;;
 	 [gG]) desktop_settings ;; # não funciona ainda
 	 [rR]) sudo reboot;;
 	 [qQ]) echo -e "\nSaindo...\n"; exit 0;;

@@ -1,7 +1,3 @@
-## dev
-build-essential
-git
-
 ## gerenciamento do sistema
 sudo
 rfkill
@@ -11,23 +7,6 @@ rsync
 
 ## gerenciador de senha
 keepassxc
-
-## web browser
-chrome
-firefox
-brave
-
-
-## instalado via flatpak
-obisidna
-clion
-intellij
-
-## comunicação
-discord
-
-## editor de codigo
-neovim -> pacstall
 
 ## gerenciador de sync/nuvem
 rclone
