@@ -2,6 +2,9 @@
 source Installers.sh ## chamado script com todas as funções de instalação
 source BuildSystem.sh ## chamando script com as funções que o menu chama
 
+#TODO NVIDIA-driver -> Adiciona suporte para nonfree...ETC e suporte arquitetura 32bits
+#TODO STEAM -> abrir o install-steam para terminar de instalar a steam
+
 (($UID==0)) && { echo 'não é permitido executar esse script como root. [ERROR]'; exit 1 ;}
 
 release="0.3"

@@ -1,0 +1,14 @@
+brightnessctl
+acpi
+pactl
+playerctl
+dbus-x11 (caso use startx)
+timeshift
+rofi
+rofi-bluetooth-menu
+xcompmgr
+lxapperance
+
+## depedencias dwm
+make gcc libx11-dev libxft-dev libxinerama-dev xorg
+
