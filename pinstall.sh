@@ -140,8 +140,6 @@ SoftwaresDaily(){
 }
 SoftwaresDev(){
     packageManager softwaresDev install
-    
-
 }
 SoftwaresEntertainment(){
     packageManager softwaresEntertainment install

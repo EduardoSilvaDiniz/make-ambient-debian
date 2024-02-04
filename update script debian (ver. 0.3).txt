@@ -1,0 +1,17 @@
+update script-debian 0.3
+
+removido installWine() não há necessidade de instalar wine
+
+refaturação dos arquivos da pasta lists, foi removido varios files e troca de nome para que faça mais sentido ao conteudo que contem
+
+menu atualizado, foi removido opções (flatpak, steam, docker, install zsh) e foi movido para dentro de outras opções, a opção "remover apps pre-instalado" foi renomeada para "limpa ambiente" que, alem de remover apps, é executado autoremove.
+
+a função connectUSB foi melhorar, agora caso não ache usb, vai procurar wifis especificos para se conectar, necessario keepassxc e banco de dados com a senha
+
+remoção da função installJetbrains() para ser preferido o uso de flatpak, redução de quebra de sistema
+
+adicionado chrome como navegador preferido
+
+foi criando dois novos scripts para separar as funções e torna o script mais organizado.
+
+
