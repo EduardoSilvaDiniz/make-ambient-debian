@@ -1,15 +1,10 @@
 ## Gerenciador de Janelas...
-xorg
-mesa-utils
-x11-xfs-utils
 lightdm
 lightdm-gtk-greeter
-suckless-tools
 rofi
-lxapperance
+lxappearance
 
 #gerenciador de arquivos...
-dbus-x11
 gvfs-backends
 gvfs-fuse
 xarchiver
@@ -18,12 +13,11 @@ p7zip-full
 
 ## Notificações...
 dunst
-#xfce4-notifyd
 
 ## Compositor de tela...
 xcompmgr
 
-## temas
+## temas...
 breeze-cursor-theme
 fonts-font-awesome
 
@@ -31,13 +25,12 @@ fonts-font-awesome
 nitrogen
 feh
 
-#tela de suspenção
-xscreensaver
+#tela de suspenção...
+suckless-tools
 
 ## Gerenciamento de redes...
 network-manager
 blueman
-network-manager-applet
 network-manager-gnome
 
 ## Caputura de tela...
@@ -57,7 +50,6 @@ neofetch
 
 ## gerenciador da tela...
 redshift
-redshift-gtk
 brightnessctl
 
 ## Agente de autenticação...
@@ -65,15 +57,10 @@ policykit-1-gnome
 
 ## Integração com o shell...
 acpi
-pactl
 playerctl
 zenity
 pulseaudio-utils
 
-## XDG
+## XDG...
 xdg-user-dirs
 xdg-utils
-
-## luz noturna
-timeshift
-timeshift-gtk

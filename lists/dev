@@ -9,11 +9,9 @@ golang
 openjdk-17-jdk
 
 #haskell
-haskell-platform
+haskell-slack
 
 ## tools
 git
-
-## Code Editor/IDE
 neovim
 emacs

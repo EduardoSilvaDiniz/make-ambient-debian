@@ -35,23 +35,33 @@ installDocker(){ # Instala o docker-cli e docker-desktop de acordo com a doc do 
 }
 
 installSteam(){
-    if ! grep -qE "^\s*deb\s.*\s(non-free|contrib)" /etc/apt/sources.list; then
-	read -p "não foi encontrado non-free contrib (necessario para instalar steam). deseja adiciona  ? [S/n]" op
-	[[ ${op,} = "n" ]] && return
-	sudo sed -i '/^deb/s/$/ non-free contrib/' /etc/apt/sources.list
-    fi
-    echo -e "\nInstalando Steam...\n"
-    sudo dpkg --add-architecture i386
-    sudo apt update
-    sudo apt install steam gamemode
-    read -p "Tecle 'enter' para continuar... "
+  enableFlagsApt
+  echo -e "\nInstalando Steam...\n"
+  sudo apt update
+  sudo apt install steam-installer gamemode mesa-vulkan-drivers libglx-mesa0:i386 mesa-vulkan-drivers:i386 libgl1-mesa-dri:i386 -y
+  read -p "Tecle 'enter' para continuar... "
+}
+enableFlagsApt(){
+  if ! grep -qE "^\s*deb\s.*\s(non-free)" /etc/apt/sources.list; then
+	  sudo sed -i '/^deb/s/$/ non-free/' /etc/apt/sources.list
+  fi
+
+  if ! grep -qE "^\s*deb\s.*\s(contrib)" /etc/apt/sources.list; then
+	  sudo sed -i '/^deb/s/$/ contrib/' /etc/apt/sources.list
+  fi
+
+  if ! grep -qE "^\s*deb\s.*\s(non-free-firmware)" /etc/apt/sources.list; then
+	  sudo sed -i '/^deb/s/$/ non-free-firmware/' /etc/apt/sources.list
+  fi
+
+  sudo dpkg --add-architecture i386
 }
 
 installAppFlatpak(){
-    flatpak install flathub md.obsidian.Obsidian -y
-    flatpak install io.gitlab.idevecore.Pomodoro -y
-    flatpak install org.prismlauncher.PrismLauncher -y
-    read -p "Tecle 'enter' para continuar... "
+  flatpak install flathub md.obsidian.Obsidian -y
+  flatpak install io.gitlab.idevecore.Pomodoro -y
+  flatpak install org.prismlauncher.PrismLauncher -y
+  read -p "Tecle 'enter' para continuar... "
 }
 
 installOhMyZsh(){
@@ -60,8 +70,8 @@ installOhMyZsh(){
 }
 
 installChrome(){
- wget -O chrome.deb -q --show-progress "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" \
-                                           && wait && apt install ./chrome.deb && rm -rf chrome.deb
+  wget -O chrome.deb -q --show-progress "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" \
+                                           && wait && sudo apt install ./chrome.deb && rm -rf chrome.deb
 }
 
 installIntellij(){
@@ -71,8 +81,30 @@ installIntellij(){
   sudo apt install intellij-idea-ultimate
 }
 
+installXmonad(){
+  sudo apt install libx11-dev libxft-dev libxinerama-dev libxrandr-dev libxss-dev haskell-stack xmobar trayer git -y
+  stack upgrade
+  mkdir ~/.config/xmonad
+  cd ~/.config/xmonad/
+  git clone https://github.com/xmonad/xmonad
+  git clone https://github.com/xmonad/xmonad-contrib
+  stack init && stack install
+}
+
+installVirtualMachine(){
+  sudo apt install qemu-kvm qemu-system qemu-utils python3 python3-pip libvirt-clients libvirt-daemon-system bridge-utils virtinst libvirt-daemon virt-manager -y
+  sudo virsh net-start default
+  sudo virsh net-autostart default
+  sudo virsh net-list --all
+  sudo usermod -aG libvirt $USER
+  sudo usermod -aG libvirt-qemu $USER
+  sudo usermod -aG kvm $USER
+  sudo usermod -aG input $USER
+  sudo usermod -aG disk $USER
+}
+
 installDwm(){
-  sudo apt install make gcc libx11-dev libxft-dev libxinerama-dev suckless-tools -y
+  sudo apt install make gcc libx11-dev libxft-dev libxinerama-dev suckless-tools git -y
   git clone https://github.com/eduardoSilvaDiniz/suckless.git ~/.config/
   dirs=$(ls ~/.config/suckless/)
   # shellcheck disable=SC2068
@@ -80,16 +112,4 @@ installDwm(){
     cd ~/.config/suckless/$a
     sudo make clean install
   done
-}
-
-installXmonad(){
-  sudo apt install libx11-dev libxft-dev libxinerama-dev libxrandr-dev libxss-dev haskell-stack xmobar trayer -y
-  stack upgrande
-  mkdir ~/.config/xmonad
-  cd ~/.config/xmonad/
-  git clone https://github.com/xmonad/xmonad
-  git clone https://github.com/xmonad/xmonad-contrib
-  stack init && stack install
-  sudo echo "export PATH=$PATH:/home/edu/.local/bin" >> /etc/environment
-
 }

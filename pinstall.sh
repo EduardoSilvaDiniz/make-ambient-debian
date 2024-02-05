@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 source Installers.sh ## chamado script com todas as funções de instalação
-
-#TODO NVIDIA-driver -> Adiciona suporte para nonfree...ETC e suporte arquitetura 32bits
-#TODO STEAM -> abrir o install-steam para terminar de instalar a steam
+#TODO adiciona alguma forma de adiciona ssh do github
+#TODO organizar o codigo
 
 (($UID==0)) && { echo 'não é permitido executar esse script como root. [ERROR]'; exit 1 ;}
 
@@ -21,15 +20,18 @@ mainTitle="$line
 INSTALAR E CONFIGURAR - SISTEMA: DEBIAN ${versionDebian} RELEASE: ${release}
 $line"
 mainMenu="$mainTitle
-   0. Conecta a Internet (usb ou wifi)
-   1. Adiciona Usuario ao Sudo
-   2. Instalar drivers Nvidia
-   3. Softwares de Uso diario
-   4. Softwares de enteterimento
-   5. Ambiente de desenvolvimento (C/C++, Java, haskell, golang)
-   6. Virtualização (não funciona)
-   7. limpa ambiente (remove apps pre-instalado, autoremove)
-   8. instalar Window Manager (dwm, xmonad)
+  0. Conecta a Internet (usb ou wifi)
+  1. Adiciona Usuario ao Sudo
+  2. Instalar drivers Nvidia
+  3. Softwares de Uso diario
+  4. Softwares de enteterimento
+  5. Softwares de desenvolvimento (C/C++, Java, haskell, golang)
+  6. instalar Window Manager (dwm, xmonad)
+  7. instalar complementos para window manager (dwm/xmonad)
+  8. limpa ambiente (remove apps pre-instalado, autoremove)
+  9. configurar Sistema
+  10. Virtualização
+
 $line
    Q. Sair
 $line
@@ -79,8 +81,8 @@ menuNetwork(){
 }
 
 connectWifi(){
-    sudo apt install keepassxc -y
-    clear
+  sudo apt install keepassxc -y
+  clear
   while $status; do
     read -p "Digite o endereço do seu banco de senhas (Exemplo /home/user/db.kdbx): " database
     read -s -p "Digite a senha do seu banco de senhas: " passDatabase
@@ -135,18 +137,111 @@ SoftwaresEntertainment(){
   installSteam
 }
 installWM(){
-  read -p "Qual window manager quer instalar ? [dwm/xmonad]" option
+  clear
   while true ; do
-    clear
+    read -p "Qual window manager quer instalar [dwm/xmonad] ? " option
     case $option in
       dwm) installDwm && break ;;
       xmonad) installXmonad && break ;;
-      default) echo 'opção invalida' ;;
+      *) echo 'opção invalida' ;;
     esac
   done
-  packageManager wm-tools install
 }
-#TODO Adiciona função para organizar meus arquivos do github DOTFILES EMACS-VANILLA DWM
+
+## TODO Adiciona função para organizar meus arquivos do github DOTFILES EMACS-VANILLA DWM
+# configurar o crontab
+# alerta de que esta proximo das 10 PM
+# atualização do sistema
+# atualizar repos (dotfiles, xmonad, save do minecraft)
+# desligar depois das 10 PM
+# compactar e criptografar a pasta sync e enviar para onedrive/adventista
+configAmbient(){
+  ## dotfiles
+  echo -e "ATENÇÃO será usando git clone via SSH, se você ainda não configurou seu SSH, cancele esse script com (Ctrl+c)\n"
+  read -p "Tecle 'enter' para continuar... "
+  mkdir ~/.local/repos
+  read -p "Qual é o nome do seu usuario no github? " name
+  git clone git@github.com:$name/dotfiles.git ~/.local/repos/dotfiles/
+
+  #files=$(echo * ~/.local/repos/dotfiles/home | grep -vE '^\.$|^\.\.$')
+  files=()
+  for file in ~/.local/repos/dotfiles/home/*; do
+    files+=("$(basename "$file")")
+  done
+
+  #dirsConfig=$(ls ~/.local/repos/dotfiles/.config | grep -vE '^ALERT$|^systemd$')
+  filesConfig=()
+  for file in ~/.local/repos/dotfiles/.config/*; do
+    if [ "$file" != "ALERT" ] && [ "$file" != "systemd" ]; then
+      filesConfig+=("$(basename "$file")")
+    fi
+  done
+
+  for a in "${files[@]}"; do
+  	ln -s ~/.local/repos/dotfiles/home/$a ~/$a
+  done
+
+  for a in "${filesConfig[@]}"; do
+  	ln -s ~/.local/repos/dotfiles/.config/$a ~/.config/$a
+  done
+
+  ln -s ~/.local/repos/dotfiles/.config/systemd/user/rclone-adventista.service ~/.config/systemd/user
+  ln -s ~/.local/repos/dotfiles/.config/systemd/user/rclone-personal.service ~/.config/systemd/user
+
+  mkdir ~/.local/rclone
+  mkdir -p ~/.local/rclone/adventista
+  mkdir -p ~/.local/rclone/personal
+
+  systemctl --user enable --now rclone-personal.service
+  systemctl --user enable --now rclone-adventista.service
+
+  ## Xmonad
+  read -p "você quer trazer suas config do xmonad [s/n] ? " op
+  if [ "$op" == "s" ]; then
+    git clone git@github.com:$name/xmonad.git ~/.local/repos/xmonad/
+    filesXmonad=$(ls ~/.local/repos/xmonad)
+    for a in "${filesXmonad[@]}"; do
+    	ln -s ~/.local/repos/xmonad/$a ~/.config/xmonad/
+    done
+  fi
+
+  ## syncthing
+  read -p "seu diretorio Sync está sicronizado [s/n] ? " op
+  if [ $op == "s" ]; then
+    ln -s ~/Sync/default/Músicas ~/
+    sudo systemctl enable --now syncthing@edu.service
+  fi
+
+  ## rclone
+  cloudService="onedrive"
+  while $status; do
+    read -p "Digite o endereço do seu banco de senhas (Exemplo /home/user/db.kdbx): " database
+    read -s -p "Digite a senha do seu banco de senhas: " passDatabase
+    if echo "$passDatabase" | keepassxc-cli ls "$database" &> /dev/null; then
+      echo -e "\nAcesso ao banco de senhas bem-sucedido" && status=false
+    else
+      echo -e "\nFalha no acesso ao banco de senhas. Verifique a senha e o caminho do banco de senhas. [ERROR]"
+    fi
+  done
+
+  while true; do
+    read -p "Digite o nome do profile rclone : " cloud
+
+    if [ -z "$wifiName" ]; then
+      continue
+    else
+      password=$(echo "$passDatabase" | keepassxc-cli show -sa password "${database}" Self-hosted/"${cloud}")
+      if [ -z "$password" ]; then
+        echo "Nome da cloud invalido [ERROR]"
+      else
+        mkdir ~/.config/rclone
+        echo -e "[$cloud]\ntype = $cloudService" >> ~/.config/rclone/rclone.conf
+        echo $password >> ~/.config/rclone/rclone.conf
+        return
+      fi
+    fi
+  done
+}
 
 while true; do
   clear
@@ -155,13 +250,15 @@ while true; do
 	case $option in
 	    0) menuNetwork ;;
 	    1) addUserSudo ;;
-	    2) packageManager driver-nvidia install ;;
+	    2) enableFlagsApt && packageManager driver-nvidia install ;;
 	    3) SoftwaresDaily ;;
-	    4) SoftwaresDev ;;
-	    5) SoftwaresEntertainment ;;
-	    6) ;;
-	    7) packageManager uninstall remove ;;
-	    8) installWM ;;
+	    4) SoftwaresEntertainment ;;
+	    5) SoftwaresDev ;;
+	    6) installWM ;;
+	    7) packageManager wm-tools install ;;
+	    8) packageManager uninstall remove ;;
+	    9) configAmbient ;;
+	    10) installVirtualMachine ;;
 	 [qQ]) echo -e "\nSaindo...\n"; exit 0;;
 	esac
 done
