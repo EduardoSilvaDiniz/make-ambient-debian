@@ -63,3 +63,33 @@ installChrome(){
  wget -O chrome.deb -q --show-progress "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" \
                                            && wait && apt install ./chrome.deb && rm -rf chrome.deb
 }
+
+installIntellij(){
+  curl -s https://s3.eu-central-1.amazonaws.com/jetbrains-ppa/0xA6E8698A.pub.asc | gpg --dearmor | sudo tee /usr/share/keyrings/jetbrains-ppa-archive-keyring.gpg > /dev/null
+  echo "deb [signed-by=/usr/share/keyrings/jetbrains-ppa-archive-keyring.gpg] http://jetbrains-ppa.s3-website.eu-central-1.amazonaws.com any main" | sudo tee /etc/apt/sources.list.d/jetbrains-ppa.list > /dev/null
+  sudo apt update
+  sudo apt install intellij-idea-ultimate
+}
+
+installDwm(){
+  sudo apt install make gcc libx11-dev libxft-dev libxinerama-dev suckless-tools -y
+  git clone https://github.com/eduardoSilvaDiniz/suckless.git ~/.config/
+  dirs=$(ls ~/.config/suckless/)
+  # shellcheck disable=SC2068
+  for a in ${dirs[@]}; do
+    cd ~/.config/suckless/$a
+    sudo make clean install
+  done
+}
+
+installXmonad(){
+  sudo apt install libx11-dev libxft-dev libxinerama-dev libxrandr-dev libxss-dev haskell-stack xmobar trayer -y
+  stack upgrande
+  mkdir ~/.config/xmonad
+  cd ~/.config/xmonad/
+  git clone https://github.com/xmonad/xmonad
+  git clone https://github.com/xmonad/xmonad-contrib
+  stack init && stack install
+  sudo echo "export PATH=$PATH:/home/edu/.local/bin" >> /etc/environment
+
+}

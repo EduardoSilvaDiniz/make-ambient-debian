@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 source Installers.sh ## chamado script com todas as funções de instalação
-source BuildSystem.sh ## chamando script com as funções que o menu chama
 
 #TODO NVIDIA-driver -> Adiciona suporte para nonfree...ETC e suporte arquitetura 32bits
 #TODO STEAM -> abrir o install-steam para terminar de instalar a steam
@@ -26,23 +25,12 @@ mainMenu="$mainTitle
    1. Adiciona Usuario ao Sudo
    2. Instalar drivers Nvidia
    3. Softwares de Uso diario
-   4. Softwares sicronização
-   5. Softwares de enteterimento
-   6. Ambiente de desenvolvimento (C/C++, Java)
-   7. Instalar Browser
-   8. fontes
-   9. Virtualização
-   10. limpa ambiente (remove apps pre-instalado, autoremove)
-
-   #12. Steam e Wine // coloca na opção softwares de enteterimento
-   #13. Flatpak // coloca na opção softwares de uso diario
-   #14. Docker // coloca na opção desenvolvimento
-   #15. Aplicativos FLatpak // coloca em softwares de uso diario
-   #17. instalar zsh // coloca em software de uso diario
-
+   4. Softwares de enteterimento
+   5. Ambiente de desenvolvimento (C/C++, Java, haskell, golang)
+   6. Virtualização (não funciona)
+   7. limpa ambiente (remove apps pre-instalado, autoremove)
+   8. instalar Window Manager (dwm, xmonad)
 $line
-   G. Configuração do ambiente gráfico // adiciona menu para instalar outras de ou wm
-   R. Reiniciar a máquina
    Q. Sair
 $line
 Escolha uma opção: "
@@ -132,39 +120,48 @@ AddUserSudo(){
 }
 
 SoftwaresDaily(){
-    packageManager softwaresDaily install
+    packageManager daily install
     installFlatpak
     installAppFlatpak
     installOhMyZsh
     installChrome
 }
 SoftwaresDev(){
-    packageManager softwaresDev install
+  packageManager dev install
+  installIntellij
 }
 SoftwaresEntertainment(){
-    packageManager softwaresEntertainment install
-    installSteam
+  packageManager entertainment install
+  installSteam
 }
-
+installWM(){
+  read -p "Qual window manager quer instalar ? [dwm/xmonad]" option
+  while true ; do
+    clear
+    case $option in
+      dwm) installDwm && break ;;
+      xmonad) installXmonad && break ;;
+      default) echo 'opção invalida' ;;
+    esac
+  done
+  packageManager wm-tools install
+}
 #TODO Adiciona função para organizar meus arquivos do github DOTFILES EMACS-VANILLA DWM
 
 while true; do
-    clear
+  clear
 	echo -e "$mainMenu\c"
 	read option
 	case $option in
 	    0) menuNetwork ;;
 	    1) addUserSudo ;;
 	    2) packageManager driver-nvidia install ;;
-	    3) packageManager softwaresDaily install ;;
-	    4) packageManager softwaresSync install ;;
-	    5) packageManager softwaresEntertainment install ;;
-	    6) packageManager softwaresDev install ;;
-	    8) packageManager fonts install ;;
-	    9) packageManager virtualization install ;;
-	   10) packageManager uninstall remove ;;
-	 [gG]) desktop_settings ;; # não funciona ainda
-	 [rR]) sudo reboot;;
+	    3) SoftwaresDaily ;;
+	    4) SoftwaresDev ;;
+	    5) SoftwaresEntertainment ;;
+	    6) ;;
+	    7) packageManager uninstall remove ;;
+	    8) installWM ;;
 	 [qQ]) echo -e "\nSaindo...\n"; exit 0;;
 	esac
 done

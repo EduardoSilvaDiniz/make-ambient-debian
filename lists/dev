@@ -1,0 +1,19 @@
+## compiladores
+#C/C++
+build-essential
+
+#Go
+golang
+
+#java
+openjdk-17-jdk
+
+#haskell
+haskell-platform
+
+## tools
+git
+
+## Code Editor/IDE
+neovim
+emacs
