@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 source Installers.sh ## chamado script com todas as funções de instalação
-#TODO adiciona alguma forma de adiciona ssh do github
+#TODO adiciona alguma forma de adiciona ssh do github, copiar id-25519 do keepass para $HOME/.ssh/
 #TODO organizar o codigo
 
 (($UID==0)) && { echo 'não é permitido executar esse script como root. [ERROR]'; exit 1 ;}
@@ -147,14 +147,15 @@ installWM(){
     esac
   done
 }
-
-## TODO Adiciona função para organizar meus arquivos do github DOTFILES EMACS-VANILLA DWM
+#TODO
 # configurar o crontab
 # alerta de que esta proximo das 10 PM
 # atualização do sistema
 # atualizar repos (dotfiles, xmonad, save do minecraft)
 # desligar depois das 10 PM
 # compactar e criptografar a pasta sync e enviar para onedrive/adventista
+
+#TODO adiciona verificação se o diretorio ou link simbolico já exite e perguntar o que deseja fazer [apagar/ignorar]
 configAmbient(){
   ## dotfiles
   echo -e "ATENÇÃO será usando git clone via SSH, se você ainda não configurou seu SSH, cancele esse script com (Ctrl+c)\n"
@@ -185,6 +186,7 @@ configAmbient(){
   	ln -s ~/.local/repos/dotfiles/.config/$a ~/.config/$a
   done
 
+  mkdir -p ~/.config/systemd/user
   ln -s ~/.local/repos/dotfiles/.config/systemd/user/rclone-adventista.service ~/.config/systemd/user
   ln -s ~/.local/repos/dotfiles/.config/systemd/user/rclone-personal.service ~/.config/systemd/user
 
@@ -213,6 +215,8 @@ configAmbient(){
   fi
 
   ## rclone
+  #TODO permitir adiciona mais de um nome (cloud1 cloud2 cloud3...)
+  #TODO error, nome do node no keepass é diferente do nome do rclone
   cloudService="onedrive"
   while $status; do
     read -p "Digite o endereço do seu banco de senhas (Exemplo /home/user/db.kdbx): " database
@@ -227,16 +231,16 @@ configAmbient(){
   while true; do
     read -p "Digite o nome do profile rclone : " cloud
 
-    if [ -z "$wifiName" ]; then
+    if [ -z "$cloud" ]; then
       continue
     else
-      password=$(echo "$passDatabase" | keepassxc-cli show -sa password "${database}" Self-hosted/"${cloud}")
-      if [ -z "$password" ]; then
+      token=$(echo "$passDatabase" | keepassxc-cli show -sa password "${database}" Self-hosted/"${cloud}")
+      if [ -z "${token}" ]; then
         echo "Nome da cloud invalido [ERROR]"
       else
         mkdir ~/.config/rclone
-        echo -e "[$cloud]\ntype = $cloudService" >> ~/.config/rclone/rclone.conf
-        echo $password >> ~/.config/rclone/rclone.conf
+        echo -e "["${cloud}"]\ntype = "${cloudService}"" >> ~/.config/rclone/rclone.conf
+        echo "${token}" >> ~/.config/rclone/rclone.conf
         return
       fi
     fi
