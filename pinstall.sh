@@ -2,6 +2,7 @@
 source Installers.sh ## chamado script com todas as funções de instalação
 #TODO adiciona alguma forma de adiciona ssh do github, copiar id-25519 do keepass para $HOME/.ssh/
 #TODO organizar o codigo
+#TODO Nvidia-install, melhoria, detectar e escolher o melhor driver para a placa de video
 
 (($UID==0)) && { echo 'não é permitido executar esse script como root. [ERROR]'; exit 1 ;}
 
@@ -20,27 +21,26 @@ mainTitle="$line
 INSTALAR E CONFIGURAR - SISTEMA: DEBIAN ${versionDebian} RELEASE: ${release}
 $line"
 mainMenu="$mainTitle
-  0. Conecta a Internet (usb ou wifi)
-  1. Adiciona Usuario ao Sudo
-  2. Instalar drivers Nvidia
-  3. Softwares de Uso diario
-  4. Softwares de enteterimento
-  5. Softwares de desenvolvimento (C/C++, Java, haskell, golang)
-  6. instalar Window Manager (dwm, xmonad)
-  7. instalar complementos para window manager (dwm/xmonad)
-  8. limpa ambiente (remove apps pre-instalado, autoremove)
-  9. configurar Sistema
-  10. Virtualização
-
+  1. Instalar drivers Nvidia
+  2. Softwares de Uso diario (rclone, syncthing, qbittorrent, chrome...)
+  3. Softwares de enteterimento (mpd, steam, mpv)
+  4. Softwares de desenvolvimento (C/C++, Java, haskell, golang)
+  5. instalar Window Manager (dwm, xmonad)
+  6. instalar complementos para dwm, xmonad
+  7. limpa ambiente (remove apps pre-instalado, autoremove)
+  8. configurar Sistema (dotfiles, syncthing, rclone)
+  9. Virtualização (virt-manager)
 $line
-   Q. Sair
+  N. Conecta a Internet (usb ou wifi)
+  S. Adiciona usuario ao sudo
+  K. Adiciona chave ssh
+  Q. Sair
 $line
 Escolha uma opção: "
 
 wifiMenu="1. Wifi (Será usando keepassxc-cli para pegar a senha no diretorio wifi/NomeDoWifi)
 2. Usb (Tethring USB android)
 Escolha uma opção: "
-
 
 readPkgs(){
     pkgs_list=$(grep -vE "^\s*#" $1 | sed '/^\s*$/d')
@@ -116,9 +116,8 @@ connectUSB(){
 }
 
 AddUserSudo(){
-    USUARIO=$USER
     echo "Digite a senha de ROOT"
-    su -c "apt install sudo; adduser $USUARIO sudo"
+    su -c "apt install sudo; adduser $USER sudo"
 }
 
 SoftwaresDaily(){
@@ -162,28 +161,16 @@ configAmbient(){
   read -p "Tecle 'enter' para continuar... "
   mkdir ~/.local/repos
   read -p "Qual é o nome do seu usuario no github? " name
-  git clone git@github.com:$name/dotfiles.git ~/.local/repos/dotfiles/
+  git clone git@github.com:"${name}"/dotfiles.git ~/.local/repos/dotfiles/
 
-  #files=$(echo * ~/.local/repos/dotfiles/home | grep -vE '^\.$|^\.\.$')
-  files=()
   for file in ~/.local/repos/dotfiles/home/*; do
-    files+=("$(basename "$file")")
+  	ln -s ~/.local/repos/dotfiles/home/$(basename "$file") ~/$(basename "$file")
   done
 
-  #dirsConfig=$(ls ~/.local/repos/dotfiles/.config | grep -vE '^ALERT$|^systemd$')
-  filesConfig=()
   for file in ~/.local/repos/dotfiles/.config/*; do
     if [ "$file" != "ALERT" ] && [ "$file" != "systemd" ]; then
-      filesConfig+=("$(basename "$file")")
+  	  ln -s ~/.local/repos/dotfiles/.config/$(basename "$file") ~/.config/$(basename "$file")
     fi
-  done
-
-  for a in "${files[@]}"; do
-  	ln -s ~/.local/repos/dotfiles/home/$a ~/$a
-  done
-
-  for a in "${filesConfig[@]}"; do
-  	ln -s ~/.local/repos/dotfiles/.config/$a ~/.config/$a
   done
 
   mkdir -p ~/.config/systemd/user
@@ -200,14 +187,14 @@ configAmbient(){
   ## Xmonad
   read -p "você quer trazer suas config do xmonad [s/n] ? " op
   if [ "$op" == "s" ]; then
-    git clone git@github.com:$name/xmonad.git ~/.local/repos/xmonad/
-    filesXmonad=$(ls ~/.local/repos/xmonad)
-    for a in "${filesXmonad[@]}"; do
-    	ln -s ~/.local/repos/xmonad/$a ~/.config/xmonad/
+    git clone git@github.com:"$name"/xmonad.git ~/.local/repos/xmonad/
+    for file in ~/.local/repos/xmonad/*; do
+    	ln -s ~/.local/repos/xmonad/$(basename "$file") ~/.config/xmonad/
     done
   fi
 
   ## syncthing
+  #TODO configurar e sicronizar, pegar key via keepassPASS
   read -p "seu diretorio Sync está sicronizado [s/n] ? " op
   if [ $op == "s" ]; then
     ln -s ~/Sync/default/Músicas ~/
@@ -217,31 +204,33 @@ configAmbient(){
   ## rclone
   #TODO permitir adiciona mais de um nome (cloud1 cloud2 cloud3...)
   #TODO error, nome do node no keepass é diferente do nome do rclone
-  cloudService="onedrive"
+  #TODO usar a var pass na criação do arquivo rclone.conf
+
+  pass=$(keepassPass Self-hosted)
+}
+
+keepassPass(){
+  #TODO adiciona alguma forma de detectar que precisa usar nmcli
   while $status; do
     read -p "Digite o endereço do seu banco de senhas (Exemplo /home/user/db.kdbx): " database
     read -s -p "Digite a senha do seu banco de senhas: " passDatabase
     if echo "$passDatabase" | keepassxc-cli ls "$database" &> /dev/null; then
-      echo -e "\nAcesso ao banco de senhas bem-sucedido" && status=false
+      local echo -e "\nAcesso ao banco de senhas bem-sucedido" && status=false
     else
-      echo -e "\nFalha no acesso ao banco de senhas. Verifique a senha e o caminho do banco de senhas. [ERROR]"
+      local echo -e "\nFalha no acesso ao banco de senhas. Verifique a senha e o caminho do banco de senhas. [ERROR]"
     fi
   done
 
   while true; do
-    read -p "Digite o nome do profile rclone : " cloud
-
-    if [ -z "$cloud" ]; then
+    read -p "Digite o nome da entidade : " entity
+    if [ -z "$entity" ]; then
       continue
     else
-      token=$(echo "$passDatabase" | keepassxc-cli show -sa password "${database}" Self-hosted/"${cloud}")
+      token=$(echo "$passDatabase" | keepassxc-cli show -sa password "${database}" "$1"/"${entity}")
       if [ -z "${token}" ]; then
-        echo "Nome da cloud invalido [ERROR]"
+        local echo "entidade invalido [ERROR]"
       else
-        mkdir ~/.config/rclone
-        echo -e "["${cloud}"]\ntype = "${cloudService}"" >> ~/.config/rclone/rclone.conf
-        echo "${token}" >> ~/.config/rclone/rclone.conf
-        return
+        echo $token
       fi
     fi
   done
@@ -252,17 +241,18 @@ while true; do
 	echo -e "$mainMenu\c"
 	read option
 	case $option in
-	    0) menuNetwork ;;
-	    1) addUserSudo ;;
-	    2) enableFlagsApt && packageManager driver-nvidia install ;;
-	    3) SoftwaresDaily ;;
-	    4) SoftwaresEntertainment ;;
-	    5) SoftwaresDev ;;
-	    6) installWM ;;
-	    7) packageManager wm-tools install ;;
-	    8) packageManager uninstall remove ;;
-	    9) configAmbient ;;
-	    10) installVirtualMachine ;;
+	    1) enableFlagsApt && packageManager driver-nvidia install ;;
+	    2) SoftwaresDaily ;;
+	    3) SoftwaresEntertainment ;;
+	    4) SoftwaresDev ;;
+	    5) installWM ;;
+	    6) packageManager wm-tools install ;;
+	    7) packageManager uninstall remove ;;
+	    8) configAmbient ;;
+	    9) installVirtualMachine ;;
+	 [gG]) menuNetwork ;;
+	 [sS]) addUserSudo ;;
+	 [kK]) copyKeySsh ;;
 	 [qQ]) echo -e "\nSaindo...\n"; exit 0;;
 	esac
 done
