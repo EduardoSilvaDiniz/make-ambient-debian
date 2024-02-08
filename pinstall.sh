@@ -148,13 +148,12 @@ installWM(){
     esac
   done
 }
-#TODO
-# configurar o crontab
+## TODO configurar o crontab ##
 # alerta de que esta proximo das 10 PM
-# atualização do sistema
-# atualizar repos (dotfiles, xmonad, save do minecraft)
-# desligar depois das 10 PM
-# compactar e criptografar a pasta sync e enviar para onedrive/adventista
+# atualização do sistema OK
+# atualizar repos (dotfiles, xmonad, save do minecraft) precisa ser assim que o pc liga
+# desligar depois das 10 PM OK
+# compactar e criptografar a pasta sync e enviar para onedrive/adventista precisa ser todo final de semana
 
 #TODO adiciona verificação se o diretorio ou link simbolico já exite e perguntar o que deseja fazer [apagar/ignorar]
 configAmbient(){
@@ -209,7 +208,10 @@ configAmbient(){
   #TODO usar a var pass na criação do arquivo rclone.conf
 
   pass=$(keepassPass Self-hosted)
+  echo -e "0 * * * * /home/edu/.local/scripts/shutdown.sh\n0 22 * * * shutdown -P now"
+  echo "copiei tudo isso e coloque em seu crontab com o comando (crontab -e)"
 }
+
 
 keepassPass(){
   #TODO adiciona alguma forma de detectar que precisa usar nmcli

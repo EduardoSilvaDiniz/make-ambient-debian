@@ -74,7 +74,7 @@ installIntellij(){
 }
 
 installXmonad(){
-  sudo apt install libx11-dev libxft-dev libxinerama-dev libxrandr-dev libxss-dev haskell-stack xmobar trayer git -y
+  sudo apt install libxss-dev libx11-dev libxft-dev libxinerama-dev libxrandr-dev libxss-dev haskell-stack xmobar trayer git -y
   stack upgrade
   mkdir ~/.config/xmonad
   cd ~/.config/xmonad/
