@@ -3,6 +3,7 @@ source Installers.sh ## chamado script com todas as funções de instalação
 #TODO adiciona alguma forma de adiciona ssh do github, copiar id-25519 do keepass para $HOME/.ssh/
 #TODO organizar o codigo
 #TODO Nvidia-install, melhoria, detectar e escolher o melhor driver para a placa de video
+#TODO adiciona alguma forma de detectar erros exemplo ((?))
 
 (($UID==0)) && { echo 'não é permitido executar esse script como root. [ERROR]'; exit 1 ;}
 
@@ -15,6 +16,12 @@ instalando=
   $line
   Instalando...
   $line
+"
+wifiMenu=
+"
+  1. Wifi (Será usando keepassxc-cli para pegar a senha no diretorio wifi/NomeDoWifi)
+  2. Usb (Tethring USB android)
+  Escolha uma opção:
 "
 
 mainTitle="$line
@@ -38,9 +45,6 @@ $line
 $line
 Escolha uma opção: "
 
-wifiMenu="1. Wifi (Será usando keepassxc-cli para pegar a senha no diretorio wifi/NomeDoWifi)
-2. Usb (Tethring USB android)
-Escolha uma opção: "
 
 readPkgs(){
     pkgs_list=$(grep -vE "^\s*#" $1 | sed '/^\s*$/d')
@@ -81,8 +85,17 @@ menuNetwork(){
 }
 
 connectWifi(){
+  #TODO arruma aqui
   sudo apt install keepassxc -y
   clear
+  nmcli device wifi list
+  password=$(keepassPass )
+  if [ -z "$password" ]; then
+    echo "Nome do wifi invalido [ERROR]"
+  else
+    nmcli device wifi connect "${wifiName}" password "${password}" && echo "conexão bem sucedido" && return
+  fi
+
   while $status; do
     read -p "Digite o endereço do seu banco de senhas (Exemplo /home/user/db.kdbx): " database
     read -s -p "Digite a senha do seu banco de senhas: " passDatabase
@@ -94,18 +107,12 @@ connectWifi(){
   done
 
   while true; do
-    nmcli device wifi list
     read -p "Digite o nome (SSID) do Wi-Fi (ou ENTER para recarregar): " wifiName
 
     if [ -z "$wifiName" ]; then
       continue
     else
       password=$(echo "$passDatabase" | keepassxc-cli show -sa password "${database}" wifi/"${wifiName}")
-      if [ -z "$password" ]; then
-        echo "Nome do wifi invalido [ERROR]"
-      else
-        nmcli device wifi connect "${wifiName}" password "${password}" && echo "conexão bem sucedido" && return
-      fi
     fi
   done
 }
@@ -113,11 +120,6 @@ connectWifi(){
 connectUSB(){
   ip a > ip-a && awk -F ': ' '{ print $2 }' ip-a > ip-a && network=$(awk '/enx/ { print }' a-mod) && \
   ip link set dev ${network} up && dhclient
-}
-
-AddUserSudo(){
-    echo "Digite a senha de ROOT"
-    su -c "apt install sudo; adduser $USER sudo"
 }
 
 SoftwaresDaily(){
