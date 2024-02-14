@@ -47,8 +47,8 @@ Escolha uma opção: "
 
 
 readPkgs(){
-    pkgs_list=$(grep -vE "^\s*#" $1 | sed '/^\s*$/d')
-    pkgs_apti=$(tr "\n" " " <<< $pkgs_list)
+    pkgs_list=$(grep -vE "^\s*#" "$1" | sed '/^\s*$/d')
+    pkgs_apti=$(tr "\n" " " <<< "$pkgs_list")
 }
 
 packageManager(){
